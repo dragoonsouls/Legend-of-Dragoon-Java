@@ -158,6 +158,7 @@ import org.legendofdragoon.modloader.registries.RegistryId;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -168,6 +169,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.IntStream;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static legend.core.GameEngine.AUDIO_THREAD;
 import static legend.core.GameEngine.CONFIG;
@@ -602,6 +606,13 @@ public class Battle extends EngineState<Battle> {
   public final SoundFile deffSounds = addSoundFile("DEFF SFX");
   public final SoundFile cutsceneSounds = addSoundFile("Cutscene SFX");
   public final SoundFile attackSounds = addSoundFile("Attack SFX");
+
+  public String deffHeadData = "";
+  public int currentDeffFrame = 0;
+  public String deffTimings = "";
+  public int weaponTrailCounter = 0;
+  public int radialGradientEffectCounter = 0;
+  public int animatedModelCounter = 0;
 
   public Battle() {
     super(LodEngineStateTypes.BATTLE.get());
@@ -4686,11 +4697,12 @@ public class Battle extends EngineState<Battle> {
     final WeaponTrailEffect3c trail = new WeaponTrailEffect3c(script.params_20[2].get(), parent);
 
     final ScriptState<EffectManagerData6c<EffectManagerParams.WeaponTrailType>> state = allocateEffectManager(
-      "Weapon trail",
+      "Weapon_trail-" + this.weaponTrailCounter,
       script.scriptState_04,
       trail,
       new EffectManagerParams.WeaponTrailType()
     );
+    this.weaponTrailCounter += 1;
 
     state.innerStruct_00.params_10.colour_1c.set(0xff, 0x80, 0x60);
 
@@ -4793,6 +4805,7 @@ public class Battle extends EngineState<Battle> {
 
   @Method(0x800cf03cL)
   public int FUN_800cf03c(final EffectManagerData6c<?> manager, final Attachment18 attachment) {
+    // This is a Tick function
     manager.params_10.trans_04.x += attachment._0c.x * attachment.direction_14;
     manager.params_10.trans_04.y += attachment._0c.y * attachment.direction_14;
     manager.params_10.trans_04.z += attachment._0c.z * attachment.direction_14;
@@ -5029,11 +5042,12 @@ public class Battle extends EngineState<Battle> {
     final int type = script.params_20[2].get();
 
     final ScriptState<EffectManagerData6c<EffectManagerParams.RadialGradientType>> state = allocateEffectManager(
-      "RadialGradientEffect14",
+      "Radial_Gradient_Effect14-" + this.radialGradientEffectCounter,
       script.scriptState_04,
       new RadialGradientEffect14(type, circleSubdivisionModifier),
       new EffectManagerParams.RadialGradientType()
     );
+    this.radialGradientEffectCounter += 1;
 
     //LAB_800d27b4
     state.innerStruct_00.params_10.scale_16.set(1.0f, 1.0f, 1.0f);
@@ -5836,6 +5850,7 @@ public class Battle extends EngineState<Battle> {
 
   @Method(0x800e4824L)
   public void FUN_800e4824(final int lightIndex, final float x, final float y, final float z) {
+    // Rotating Lights from the Scene
     final Vector3f rotation = new Vector3f();
     this.FUN_800e4674(rotation, new Vector3f(x, y, z));
     final BttlLightStruct84 light = this.lights_800c692c[lightIndex];
@@ -6214,6 +6229,7 @@ public class Battle extends EngineState<Battle> {
   @ScriptParam(direction = ScriptParam.Direction.IN, type = ScriptParam.Type.INT, name = "The number of ticks")
   @Method(0x800e559cL)
   public FlowControl FUN_800e559c(final RunningScript<?> script) {
+    // Changing Intensity of lights by ticks
     final BttlLightStruct84 light = this.lights_800c692c[script.params_20[0].get()];
     final int ticks = script.params_20[4].get();
 
@@ -6542,6 +6558,7 @@ public class Battle extends EngineState<Battle> {
     v0.managerState_18 = state;
     v0.init_1c = true;
     v0.frameCount_20 = -1;
+    this.currentDeffFrame = -1;
     return state;
   }
 
@@ -6554,6 +6571,9 @@ public class Battle extends EngineState<Battle> {
 
     final int index = script.params_20[0].get() & 0xffff;
     final int scriptEntrypoint = script.params_20[3].get() & 0xff;
+    final int flags = script.params_20[0].get();
+    final int param = script.params_20[2].get();
+    this.deffHeadData = "Dragoon DEFF Index: " + index + ", Entrypoint: " + scriptEntrypoint + ", FLAGs: " + flags + ", Params: " + param;
 
     LOGGER.info(DEFF, "Loading dragoon DEFF (ID: %d, flags: %x)", index, script.params_20[0].get() & 0xffff_0000);
 
@@ -6844,6 +6864,7 @@ public class Battle extends EngineState<Battle> {
 
     if(a0.frameCount_20 != -1) {
       a0.frameCount_20 += vsyncMode_8007a3b8;
+      this.currentDeffFrame += vsyncMode_8007a3b8;
     }
 
     //LAB_800e70fc
@@ -6865,8 +6886,11 @@ public class Battle extends EngineState<Battle> {
         state.loadScriptFile(a0.script_14, a0.scriptEntrypoint_10);
         a0.init_1c = false;
         a0.frameCount_20 = 0;
+        this.currentDeffFrame = 0;
       }
     }
+    final String deffTiming = "Frame: " + this.currentDeffFrame + ", isPaused: " + state.isPaused() + ", Init: " + a0.init_1c + '\n';
+    this.deffTimings += deffTiming;
 
     //LAB_800e71c4
   }
@@ -7136,16 +7160,19 @@ public class Battle extends EngineState<Battle> {
   @ScriptParam(direction = ScriptParam.Direction.IN, type = ScriptParam.Type.INT, name = "effectIndex", description = "The new effect manager script index")
   @Method(0x800e9854L)
   public FlowControl FUN_800e9854(final RunningScript<? extends BattleObject> script) {
+    // Shana Transform (4212) loads the file: 1 (Shana Normal), 2 (Shana Dragoon)
     final DeffPart.AnimatedTmdType animatedTmdType = (DeffPart.AnimatedTmdType)deffManager_800c693c.getDeffPart(script.params_20[1].get() | 0x200_0000);
 
     final ModelEffect13c effect = new ModelEffect13c("Script " + script.scriptState_04.index);
 
+    final String fileNameNew = "Animated Model File " + this.animatedModelCounter + ": " + ByteBuffer.allocate(4).putInt(script.params_20[1].get() | 0x200_0000) + ", Params: " + script.params_20[1].get();
     final ScriptState<EffectManagerData6c<EffectManagerParams.AnimType>> state = allocateEffectManager(
-      animatedTmdType.name,
+      fileNameNew,
       script.scriptState_04,
       effect,
       new EffectManagerParams.AnimType()
     );
+    this.animatedModelCounter += 1;
 
     final EffectManagerData6c<EffectManagerParams.AnimType> manager = state.innerStruct_00;
     manager.flags_04 = 0x200_0000;
@@ -7179,6 +7206,7 @@ public class Battle extends EngineState<Battle> {
   @ScriptParam(direction = ScriptParam.Direction.IN, type = ScriptParam.Type.INT, name = "flags", description = "The DEFF flags, mostly unknown")
   @Method(0x800e99bcL)
   public FlowControl FUN_800e99bc(final RunningScript<? extends BattleObject> script) {
+    // Shana Transform (4212) loads the file: 0 (Rotating Spirit Glow)
     final DeffPart.AnimatedTmdType animatedTmdType = (DeffPart.AnimatedTmdType)deffManager_800c693c.getDeffPart(script.params_20[1].get() | 0x100_0000);
 
     final ModelEffect13c effect = new ModelEffect13c("Script " + script.scriptState_04.index);

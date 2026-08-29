@@ -92,6 +92,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
+import org.bytedeco.opencv.presets.opencv_core;
 import org.joml.Math;
 import org.joml.Matrix3f;
 import org.joml.Vector2f;
@@ -99,7 +100,13 @@ import org.joml.Vector3f;
 import org.joml.Vector3i;
 
 import javax.annotation.Nullable;
+import java.math.BigDecimal;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
 
 import static legend.core.GameEngine.CONFIG;
@@ -195,6 +202,7 @@ public final class SEffe {
   private static int[] daddyHitSuccessWindowsPointer_8011a02c;
 
   private static final MV seffeTransforms = new MV();
+  public static List<String> deffObjectsManagerTicking = new ArrayList<>();
 
   @Method(0x800cea1cL)
   public static void scriptGetScriptedObjectPos(final int scriptIndex, final Vector3f posOut) {
@@ -550,6 +558,22 @@ public final class SEffe {
     //LAB_800e8040
     if(manager.effect_44 != null) {
       manager.effect_44.destroy(state);
+      final String currentDeffObject = "Deallocating Object: " + manager.name;
+      final String currentDeffFrame = ", Frame: " + ((Battle)currentEngineState_8004dd04).currentDeffFrame;
+      final String transX = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.x).toPlainString();
+      final String transY = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.y).toPlainString();
+      final String transZ = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.z).toPlainString();
+      final String correctTranslation = '[' + transX + "; " + transY + "; " + transZ + ']';
+      final String rotX = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.x).toPlainString();
+      final String rotY = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.y).toPlainString();
+      final String rotZ = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.z).toPlainString();
+      final String correctRotation = '[' + rotX + "; " + rotY + "; " + rotZ + ']';
+      final String scaX = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.x).toPlainString();
+      final String scaY = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.y).toPlainString();
+      final String scaZ = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.z).toPlainString();
+      final String correctScale = '[' + scaX + "; " + scaY + "; " + scaZ + ']';
+      final String currentDeffObjectAllocationData = ", Translation: " + correctTranslation + ", Rotation: " + correctRotation + ", Scale: " + correctScale;
+      deffObjectsManagerTicking.add(currentDeffObject + currentDeffFrame + currentDeffObjectAllocationData + '\n');
     }
   }
 
@@ -559,6 +583,7 @@ public final class SEffe {
 
   @Method(0x800e80c4L)
   public static <T extends EffectManagerParams<T>> ScriptState<EffectManagerData6c<T>> allocateEffectManager(final String name, @Nullable ScriptState<? extends BattleObject> parentState, @Nullable final Effect<T> effect, final T inner) {
+    // TODO we can pass the deffPart.get()?
     final ScriptState<EffectManagerData6c<T>> state = SCRIPTS.allocateScriptState(name, new EffectManagerData6c<>((Battle)currentEngineState_8004dd04, name, inner));
     final EffectManagerData6c<T> manager = state.innerStruct_00;
 
@@ -606,6 +631,23 @@ public final class SEffe {
       parent.childScript_52 = (ScriptState)state;
     }
 
+    final String currentDeffObject = "Object: " + manager.name;
+    final String currentDeffFrame = ", Frame: " + ((Battle)currentEngineState_8004dd04).currentDeffFrame;
+    final String transX = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.x).toPlainString();
+    final String transY = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.y).toPlainString();
+    final String transZ = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.z).toPlainString();
+    final String correctTranslation = '[' + transX + "; " + transY + "; " + transZ + ']';
+    final String rotX = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.x).toPlainString();
+    final String rotY = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.y).toPlainString();
+    final String rotZ = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.z).toPlainString();
+    final String correctRotation = '[' + rotX + "; " + rotY + "; " + rotZ + ']';
+    final String scaX = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.x).toPlainString();
+    final String scaY = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.y).toPlainString();
+    final String scaZ = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.z).toPlainString();
+    final String correctScale = '[' + scaX + "; " + scaY + "; " + scaZ + ']';
+    final String currentDeffObjectAllocationData = ", Translation: " + correctTranslation + ", Rotation: " + correctRotation + ", Scale: " + correctScale;
+    deffObjectsManagerTicking.add(currentDeffObject + currentDeffFrame + currentDeffObjectAllocationData + '\n');
+
     return state;
   }
 
@@ -638,6 +680,22 @@ public final class SEffe {
     //LAB_800e8f9c
     if(manager.effect_44 != null) {
       manager.effect_44.tick(state);
+      final String currentDeffObject = "Object: " + manager.name;
+      final String currentDeffFrame = ", Frame: " + ((Battle)currentEngineState_8004dd04).currentDeffFrame;
+      final String transX = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.x).toPlainString();
+      final String transY = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.y).toPlainString();
+      final String transZ = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.z).toPlainString();
+      final String correctTranslation = '[' + transX + "; " + transY + "; " + transZ + ']';
+      final String rotX = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.x).toPlainString();
+      final String rotY = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.y).toPlainString();
+      final String rotZ = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.z).toPlainString();
+      final String correctRotation = '[' + rotX + "; " + rotY + "; " + rotZ + ']';
+      final String scaX = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.x).toPlainString();
+      final String scaY = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.y).toPlainString();
+      final String scaZ = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.z).toPlainString();
+      final String correctScale = '[' + scaX + "; " + scaY + "; " + scaZ + ']';
+      final String currentDeffObjectAllocationData = ", Translation: " + correctTranslation + ", Rotation: " + correctRotation + ", Scale: " + correctScale;
+      deffObjectsManagerTicking.add(currentDeffObject + currentDeffFrame + currentDeffObjectAllocationData + '\n');
     }
 
     //LAB_800e8fb8
