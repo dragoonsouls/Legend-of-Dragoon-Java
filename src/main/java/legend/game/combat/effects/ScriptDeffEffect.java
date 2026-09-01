@@ -24,16 +24,20 @@ public class ScriptDeffEffect implements Effect<EffectManagerParams.VoidType> {
 
   @Override
   public void destroy(final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state) {
-    ((Battle)currentEngineState_8004dd04).scriptDeffDeallocator(state, state.innerStruct_00);
-    try {
-      final String deffFinal = ((Battle)currentEngineState_8004dd04).deffHeadData + ", Total Frames: " + ((Battle)currentEngineState_8004dd04).loadedDeff_800c6938.frameCount_20 + '\n' + ((Battle)currentEngineState_8004dd04).deffTimings;
-      Files.writeString(Path.of("D:\\TLoD_Modding\\DEFF_File_Mapping\\Dragoon-Captured\\4204-Dart_Red-Eyed_Dragoon_Transformation.txt"), deffFinal);
-      System.out.println("DEFF Ticking File successfully created...");
-      final String deffObjectsFinal = SEffe.deffObjectsManagerTicking.toString();
-      System.out.println(deffObjectsFinal);
-    } catch(final IOException e) {
-      System.out.println("An error occurred while writing.");
-      e.printStackTrace();
+    if (((Battle)currentEngineState_8004dd04).isDeffDump) {
+      try {
+        final String deffFinal = ((Battle)currentEngineState_8004dd04).deffHeadData + ", Total Frames: " + ((Battle)currentEngineState_8004dd04).loadedDeff_800c6938.frameCount_20 + '\n' + ((Battle)currentEngineState_8004dd04).deffTimings;
+        Files.writeString(Path.of("D:\\TLoD_Modding\\DEFF_File_Mapping\\Dragoon-Captured\\4204-Dart_Red-Eyed_Dragoon_Transformation\\4204-Dart_Red-Eyed_Dragoon_Transformation.txt"), deffFinal);
+        System.out.println("DEFF Final File successfully created...");
+        final String deffObjectsFinal = SEffe.deffObjectsManagerTicking.toString();
+        System.out.println(deffObjectsFinal);
+      } catch(final IOException e) {
+        System.out.println("An error occurred while writing.");
+        e.printStackTrace();
+      }
+
+      ((Battle)currentEngineState_8004dd04).isDeffDump = false;
     }
+    ((Battle)currentEngineState_8004dd04).scriptDeffDeallocator(state, state.innerStruct_00);
   }
 }
