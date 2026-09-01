@@ -100,10 +100,14 @@ import org.joml.Vector3f;
 import org.joml.Vector3i;
 
 import javax.annotation.Nullable;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiFunction;
 
 import static legend.core.GameEngine.CONFIG;
@@ -199,7 +203,6 @@ public final class SEffe {
   private static int[] daddyHitSuccessWindowsPointer_8011a02c;
 
   private static final MV seffeTransforms = new MV();
-  public static List<String> deffObjectsManagerTicking = new ArrayList<>();
 
   @Method(0x800cea1cL)
   public static void scriptGetScriptedObjectPos(final int scriptIndex, final Vector3f posOut) {
@@ -553,24 +556,24 @@ public final class SEffe {
     }
 
     //LAB_800e8040
+    if (((Battle)currentEngineState_8004dd04).isDeffDump) {
+      // Need the data before destroy
+      final String transX = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.x).toPlainString();
+      final String transY = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.y).toPlainString();
+      final String transZ = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.z).toPlainString();
+      final String correctTranslation = '[' + transX + "; " + transY + "; " + transZ + ']';
+      final String rotX = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.x).toPlainString();
+      final String rotY = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.y).toPlainString();
+      final String rotZ = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.z).toPlainString();
+      final String correctRotation = '[' + rotX + "; " + rotY + "; " + rotZ + ']';
+      final String scaX = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.x).toPlainString();
+      final String scaY = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.y).toPlainString();
+      final String scaZ = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.z).toPlainString();
+      final String correctScale = '[' + scaX + "; " + scaY + "; " + scaZ + ']';
+      final String currentDeffObjectAllocationData = correctTranslation + ',' + correctRotation + ',' + correctScale;
+      manager.writeFrameData(((Battle)currentEngineState_8004dd04).currentDeffFrame, currentDeffObjectAllocationData);
+    }
     if(manager.effect_44 != null) {
-      if (((Battle)currentEngineState_8004dd04).isDeffDump) {
-        // Need the data before destroy
-        final String transX = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.x).toPlainString();
-        final String transY = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.y).toPlainString();
-        final String transZ = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.z).toPlainString();
-        final String correctTranslation = '[' + transX + "; " + transY + "; " + transZ + ']';
-        final String rotX = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.x).toPlainString();
-        final String rotY = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.y).toPlainString();
-        final String rotZ = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.z).toPlainString();
-        final String correctRotation = '[' + rotX + "; " + rotY + "; " + rotZ + ']';
-        final String scaX = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.x).toPlainString();
-        final String scaY = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.y).toPlainString();
-        final String scaZ = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.z).toPlainString();
-        final String correctScale = '[' + scaX + "; " + scaY + "; " + scaZ + ']';
-        final String currentDeffObjectAllocationData = correctTranslation + ',' + correctRotation + ',' + correctScale;
-        manager.writeFrameData(((Battle)currentEngineState_8004dd04).currentDeffFrame, currentDeffObjectAllocationData);
-      }
       manager.effect_44.destroy(state);
     }
   }
@@ -669,6 +672,23 @@ public final class SEffe {
         //LAB_800e8f1c
       } else if(ret == 2) { // Remove this effect entirely
         //LAB_800e8f78
+        if (((Battle)currentEngineState_8004dd04).isDeffDump) {
+          manager.endFrame = ((Battle)currentEngineState_8004dd04).currentDeffFrame;
+          final String transX = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.x).toPlainString();
+          final String transY = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.y).toPlainString();
+          final String transZ = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.z).toPlainString();
+          final String correctTranslation = '[' + transX + "; " + transY + "; " + transZ + ']';
+          final String rotX = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.x).toPlainString();
+          final String rotY = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.y).toPlainString();
+          final String rotZ = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.z).toPlainString();
+          final String correctRotation = '[' + rotX + "; " + rotY + "; " + rotZ + ']';
+          final String scaX = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.x).toPlainString();
+          final String scaY = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.y).toPlainString();
+          final String scaZ = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.z).toPlainString();
+          final String correctScale = '[' + scaX + "; " + scaY + "; " + scaZ + ']';
+          final String currentDeffObjectAllocationData = correctTranslation + ',' + correctRotation + ',' + correctScale;
+          manager.writeFrameData(((Battle)currentEngineState_8004dd04).currentDeffFrame, currentDeffObjectAllocationData);
+        }
         state.deallocateWithChildren();
         return;
       }

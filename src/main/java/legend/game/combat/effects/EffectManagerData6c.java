@@ -22,7 +22,7 @@ import java.util.function.BiFunction;
 import java.util.regex.Pattern;
 
 public class EffectManagerData6c<T extends EffectManagerParams<T>> extends BattleObject implements AttachmentHost {
-  private static final Pattern PATTERN = Pattern.compile("[\\\\/:*?\"<>|]");
+  public static final Pattern PATTERN = Pattern.compile("[\\\\/:*?\"<>|]");
   public final String name;
 
   /** The first 11 (or more?) bits denote which attachments this effect has */
