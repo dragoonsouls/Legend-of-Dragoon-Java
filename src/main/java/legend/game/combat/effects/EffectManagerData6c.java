@@ -7,9 +7,22 @@ import legend.game.scripting.ScriptState;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.regex.Pattern;
 
 public class EffectManagerData6c<T extends EffectManagerParams<T>> extends BattleObject implements AttachmentHost {
+  private static final Pattern PATTERN = Pattern.compile("[\\\\/:*?\"<>|]");
   public final String name;
 
   /** The first 11 (or more?) bits denote which attachments this effect has */
@@ -33,15 +46,62 @@ public class EffectManagerData6c<T extends EffectManagerParams<T>> extends Battl
   /** A linked list of attachments */
   private EffectAttachment attachment_58;
   //  public String type_5c; Equivalent to "name" above
+  public int loadingIndex = 0;
+  public String realName = "";
+  public String frameData = "";
+  public int startFrame = 0;
+  public int currentFrame = 0;
+  public int endFrame = 0;
+  public int paramsData = 0;
 
   public static <T extends EffectManagerParams<T>> Class<EffectManagerData6c<T>> classFor(final Class<T> cls) {
     return (Class<EffectManagerData6c<T>>)(Class<?>)EffectManagerData6c.class;
   }
 
-  public EffectManagerData6c(final Battle battle, final String name, final T params) {
+  public EffectManagerData6c(final Battle battle, final String name, final T params, final int loadingIndex) {
     super(battle, BattleObject.EM__);
     this.name = name;
     this.params_10 = params;
+    this.loadingIndex = loadingIndex;
+  }
+
+  public void setRealName(final String realName) {
+    this.realName = realName;
+  }
+
+  public void setStartFrame(final int startFrame) {
+    this.startFrame = startFrame;
+  }
+
+  public void setFrameData(final int frame, final String data) {
+    this.currentFrame = frame;
+    final String newData = frame + "," + data + ",\n";
+    this.frameData += newData;
+  }
+
+  public void writeFrameData(final int frame, final String data) {
+    this.endFrame = frame;
+    this.setFrameData(frame, data);
+
+    String safeFilename = "";
+    if (Objects.equals(this.realName, "")) {
+      safeFilename = "Main";
+    } else {
+      safeFilename = PATTERN.matcher(this.realName).replaceAll("_");
+    }
+    final String dumpFile = "D:\\TLoD_Modding\\DEFF_File_Mapping\\Dragoon-Captured\\4204-Dart_Red-Eyed_Dragoon_Transformation\\DeffParts\\" + safeFilename + ".csv";
+    try (final BufferedWriter writer = new BufferedWriter(new FileWriter(dumpFile))) {
+      final String headerDefaultData = "Manager,startFrame,endFrame,totalFrames,\n";
+      final String headerData = safeFilename + ',' + this.startFrame + ',' + this.endFrame + ',' + (this.endFrame - this.startFrame) + '\n';
+      writer.write(headerDefaultData);
+      writer.write(headerData);
+      final String transformDefaultData = "frameNumber,Translation,Rotation,Scale,\n";
+      writer.write(transformDefaultData);
+      writer.write(this.frameData);
+      System.out.println("File: " + safeFilename + " successfully written...");
+    } catch(IOException e) {
+      System.out.println("WARNING!! - File: " + safeFilename + " FAILED TO BE WRITTEN!!!...");
+    }
   }
 
   public void set(final EffectManagerData6c<T> other) {

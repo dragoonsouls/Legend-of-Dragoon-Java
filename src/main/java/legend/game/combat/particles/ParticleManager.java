@@ -1,6 +1,7 @@
 package legend.game.combat.particles;
 
 import legend.core.memory.Method;
+import legend.game.combat.Battle;
 import legend.game.combat.effects.EffectManagerData6c;
 import legend.game.combat.effects.EffectManagerParams;
 import legend.game.combat.environment.BattleCamera;
@@ -10,6 +11,7 @@ import legend.game.scripting.ScriptState;
 import javax.annotation.Nullable;
 import java.util.function.BiFunction;
 
+import static legend.game.EngineStates.currentEngineState_8004dd04;
 import static legend.game.combat.SEffe.allocateEffectManager;
 
 public class ParticleManager {
@@ -49,8 +51,9 @@ public class ParticleManager {
       default -> throw new RuntimeException("Invalid particle type");
     };
 
+    final String realName = ((Battle)currentEngineState_8004dd04).effectManagerCounter + "-Particle";
     final ScriptState<EffectManagerData6c<EffectManagerParams.ParticleType>> state = allocateEffectManager(
-      "Particle effect %x".formatted(particleTypeId),
+      realName,
       allocator,
       particle,
       new EffectManagerParams.ParticleType()

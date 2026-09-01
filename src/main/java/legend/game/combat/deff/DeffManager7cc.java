@@ -1,5 +1,6 @@
 package legend.game.combat.deff;
 
+import legend.game.combat.Battle;
 import legend.game.tmd.TmdObjTable1c;
 import legend.core.memory.Method;
 import legend.game.combat.effects.EffectManagerData6c;
@@ -13,6 +14,7 @@ import legend.game.scripting.ScriptState;
 
 import java.util.Arrays;
 
+import static legend.game.EngineStates.currentEngineState_8004dd04;
 import static legend.game.combat.SEffe.allocateEffectManager;
 
 public class DeffManager7cc {
@@ -98,7 +100,13 @@ public class DeffManager7cc {
       //LAB_800e9214
       this.deallocateScriptsArray();
       this.scriptState_1c.deallocateWithChildren();
-      final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> manager = allocateEffectManager("DEFF manager (but different)", null, null);
+      final String realName;
+      if (((Battle)currentEngineState_8004dd04).isDeffDump) {
+        realName = ((Battle)currentEngineState_8004dd04).effectManagerCounter + "-DEFF-manager-but-different";
+      } else {
+        realName = "DEFF manager (but different)";
+      }
+      final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> manager = allocateEffectManager(realName, null, null);
       this.scriptState_1c = manager;
       manager.innerStruct_00.flags_04 = 0x600_0400;
     }

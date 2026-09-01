@@ -39,8 +39,10 @@ import legend.game.combat.bent.MonsterBattleEntity;
 import legend.game.combat.bent.PlayerBattleEntity;
 import legend.game.combat.bent.SetBattleEntityStatEvent;
 import legend.game.combat.deff.Anim;
+import legend.game.combat.deff.Cmb;
 import legend.game.combat.deff.DeffManager7cc;
 import legend.game.combat.deff.DeffPart;
+import legend.game.combat.deff.Lmb;
 import legend.game.combat.deff.LoadedDeff24;
 import legend.game.combat.effects.AdditionCharEffectData0c;
 import legend.game.combat.effects.AdditionNameTextEffect1c;
@@ -158,8 +160,10 @@ import org.legendofdragoon.modloader.registries.RegistryId;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -168,6 +172,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.IntStream;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static legend.core.GameEngine.AUDIO_THREAD;
 import static legend.core.GameEngine.CONFIG;
@@ -602,6 +609,13 @@ public class Battle extends EngineState<Battle> {
   public final SoundFile deffSounds = addSoundFile("DEFF SFX");
   public final SoundFile cutsceneSounds = addSoundFile("Cutscene SFX");
   public final SoundFile attackSounds = addSoundFile("Attack SFX");
+
+  public String deffHeadData = "";
+  public int currentDeffFrame = 0;
+  public String deffTimings = "";
+  public int effectManagerCounter = 0;
+  public boolean isDeffDump = false;
+  public String dumpFolder = null;
 
   public Battle() {
     super(LodEngineStateTypes.BATTLE.get());
@@ -4685,8 +4699,9 @@ public class Battle extends EngineState<Battle> {
 
     final WeaponTrailEffect3c trail = new WeaponTrailEffect3c(script.params_20[2].get(), parent);
 
+    final String weaponTrailName = this.effectManagerCounter + "-weaponTrail";
     final ScriptState<EffectManagerData6c<EffectManagerParams.WeaponTrailType>> state = allocateEffectManager(
-      "Weapon trail",
+      weaponTrailName,
       script.scriptState_04,
       trail,
       new EffectManagerParams.WeaponTrailType()
@@ -4731,7 +4746,13 @@ public class Battle extends EngineState<Battle> {
     final int ticks = script.params_20[7].get() & 0xffff;
 
     final FullScreenOverlayEffect0e effect = new FullScreenOverlayEffect0e(r, g, b, fullR, fullG, fullB, ticks);
-    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager("Full screen overlay rgb(%x, %x, %x) -> rgb(%x, %x, %x)".formatted(r, g, b, fullR, fullG, fullB), script.scriptState_04, effect);
+    final String realName;
+    if (this.isDeffDump) {
+      realName = this.effectManagerCounter + "-fullScreenOverlay";
+    } else {
+      realName = "Full screen overlay rgb(%x, %x, %x) -> rgb(%x, %x, %x)".formatted(r, g, b, fullR, fullG, fullB);
+    }
+    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager(realName, script.scriptState_04, effect);
     state.innerStruct_00.params_10.flags_00 = 0x5000_0000;
 
     script.params_20[0].set(state.index);
@@ -4793,6 +4814,7 @@ public class Battle extends EngineState<Battle> {
 
   @Method(0x800cf03cL)
   public int FUN_800cf03c(final EffectManagerData6c<?> manager, final Attachment18 attachment) {
+    // This is a Tick function
     manager.params_10.trans_04.x += attachment._0c.x * attachment.direction_14;
     manager.params_10.trans_04.y += attachment._0c.y * attachment.direction_14;
     manager.params_10.trans_04.z += attachment._0c.z * attachment.direction_14;
@@ -4946,7 +4968,13 @@ public class Battle extends EngineState<Battle> {
     final int b = script.params_20[4].get();
 
     final ProjectileHitEffect14 effect = new ProjectileHitEffect14(count, r, g, b);
-    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager("ProjectileHitEffect14", script.scriptState_04, effect);
+    final String realName;
+    if (this.isDeffDump) {
+      realName = this.effectManagerCounter + "-ProjectileHitEffect14";
+    } else {
+      realName = "ProjectileHitEffect14";
+    }
+    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager(realName, script.scriptState_04, effect);
 
     //LAB_800d0980
     script.params_20[0].set(state.index);
@@ -4977,7 +5005,13 @@ public class Battle extends EngineState<Battle> {
     final int ticks = script.params_20[6].get();
 
     final AdditionSparksEffect08 effect = new AdditionSparksEffect08(count, distance, ticks, r, g, b);
-    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager("AdditionSparksEffect08", script.scriptState_04, effect);
+    final String realName;
+    if (this.isDeffDump) {
+      realName = this.effectManagerCounter + "-AdditionSparksEffect08";
+    } else {
+      realName = "AdditionSparksEffect08";
+    }
+    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager(realName, script.scriptState_04, effect);
 
     //LAB_800d1154
     script.params_20[0].set(state.index);
@@ -4996,7 +5030,13 @@ public class Battle extends EngineState<Battle> {
     final int type = script.params_20[3].get();
 
     final AdditionStarburstEffect10 effect = new AdditionStarburstEffect10(type, parentIndex, rayCount);
-    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager("AdditionStarburstEffect10", script.scriptState_04, effect);
+    final String realName;
+    if (this.isDeffDump) {
+      realName = this.effectManagerCounter + "-AdditionStarburstEffect10";
+    } else {
+      realName = "AdditionStarburstEffect10";
+    }
+    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager(realName, script.scriptState_04, effect);
 
     //LAB_800d1c7c
     script.params_20[0].set(state.index);
@@ -5007,7 +5047,13 @@ public class Battle extends EngineState<Battle> {
   @ScriptParam(direction = ScriptParam.Direction.OUT, type = ScriptParam.Type.INT, name = "effectIndex", description = "The new effect manager script index")
   @Method(0x800d1cacL)
   public FlowControl FUN_800d1cac(final RunningScript<? extends BattleObject> script) {
-    script.params_20[0].set(allocateEffectManager("Unknown (FUN_800d1cac)", script.scriptState_04, null).index);
+    final String realName;
+    if (this.isDeffDump) {
+      realName = this.effectManagerCounter + "-Unknown-FUN_800d1cac";
+    } else {
+      realName = "Unknown (FUN_800d1cac)";
+    }
+    script.params_20[0].set(allocateEffectManager(realName, script.scriptState_04, null).index);
     return FlowControl.CONTINUE;
   }
 
@@ -5015,7 +5061,13 @@ public class Battle extends EngineState<Battle> {
   @ScriptParam(direction = ScriptParam.Direction.OUT, type = ScriptParam.Type.INT, name = "effectIndex", description = "The new effect manager script index")
   @Method(0x800d1cf4L)
   public FlowControl FUN_800d1cf4(final RunningScript<? extends BattleObject> script) {
-    script.params_20[0].set(allocateEffectManager("Unknown (FUN_800d1cf4)", script.scriptState_04, null).index);
+    final String realName;
+    if (this.isDeffDump) {
+      realName = this.effectManagerCounter + "-Unknown-FUN_800d1cf4";
+    } else {
+      realName = "Unknown (FUN_800d1cf4)";
+    }
+    script.params_20[0].set(allocateEffectManager(realName, script.scriptState_04, null).index);
     return FlowControl.CONTINUE;
   }
 
@@ -5028,8 +5080,9 @@ public class Battle extends EngineState<Battle> {
     final int circleSubdivisionModifier = script.params_20[1].get();
     final int type = script.params_20[2].get();
 
+    final String radialGradientName = this.effectManagerCounter + "-radialGradient";
     final ScriptState<EffectManagerData6c<EffectManagerParams.RadialGradientType>> state = allocateEffectManager(
-      "RadialGradientEffect14",
+      radialGradientName,
       script.scriptState_04,
       new RadialGradientEffect14(type, circleSubdivisionModifier),
       new EffectManagerParams.RadialGradientType()
@@ -5046,7 +5099,13 @@ public class Battle extends EngineState<Battle> {
   @Method(0x800d2ff4L)
   public FlowControl scriptAllocateGuardEffect(final RunningScript<? extends BattleObject> script) {
     final GuardEffect06 effect = new GuardEffect06();
-    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager("GuardEffect06", script.scriptState_04, effect);
+    final String realName;
+    if (this.isDeffDump) {
+      realName = this.effectManagerCounter + "-GuardEffect06";
+    } else {
+      realName = "GuardEffect06";
+    }
+    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager(realName, script.scriptState_04, effect);
 
     // Hack to make shield color default if counter overlay color is default
     // Otherwise, just use the overlay color. Maybe we can make shields toggleable later.
@@ -5078,7 +5137,13 @@ public class Battle extends EngineState<Battle> {
     final SpriteMetrics08 sprite = deffManager_800c693c.spriteMetrics_39c[script.params_20[2].get() & 0xff];
 
     final MonsterDeathEffect34 deathEffect = new MonsterDeathEffect34(parent, new GenericSpriteEffect24(0x5400_0000, sprite));
-    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager("MonsterDeathEffect34", script.scriptState_04, deathEffect);
+    final String realName;
+    if (this.isDeffDump) {
+      realName = this.effectManagerCounter + "-MonsterDeathEffect34";
+    } else {
+      realName = "MonsterDeathEffect34";
+    }
+    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager(realName, script.scriptState_04, deathEffect);
 
     //LAB_800d35cc
     script.params_20[0].set(state.index);
@@ -5836,6 +5901,7 @@ public class Battle extends EngineState<Battle> {
 
   @Method(0x800e4824L)
   public void FUN_800e4824(final int lightIndex, final float x, final float y, final float z) {
+    // Rotating Lights from the Scene
     final Vector3f rotation = new Vector3f();
     this.FUN_800e4674(rotation, new Vector3f(x, y, z));
     final BttlLightStruct84 light = this.lights_800c692c[lightIndex];
@@ -6214,6 +6280,7 @@ public class Battle extends EngineState<Battle> {
   @ScriptParam(direction = ScriptParam.Direction.IN, type = ScriptParam.Type.INT, name = "The number of ticks")
   @Method(0x800e559cL)
   public FlowControl FUN_800e559c(final RunningScript<?> script) {
+    // Changing Intensity of lights by ticks
     final BttlLightStruct84 light = this.lights_800c692c[script.params_20[0].get()];
     final int ticks = script.params_20[4].get();
 
@@ -6527,7 +6594,14 @@ public class Battle extends EngineState<Battle> {
       }
     }
 
-    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager("DEFF ticker for script %d (%s)".formatted(parent.index, parent.name), parent, effect);
+    final String realName;
+    if (this.isDeffDump) {
+      realName = this.effectManagerCounter + "-DEFF-Ticker-Script";
+    } else {
+      realName = "DEFF ticker for script %d (%s)".formatted(parent.index, parent.name);
+    }
+
+    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager(realName, parent, effect);
 
     LOGGER.info(DEFF, "Allocated DEFF script state %d for bent %d, param %d, parent %d, entrypoint %d", state.index, bentIndex, param, parent.index, entrypoint);
 
@@ -6554,11 +6628,25 @@ public class Battle extends EngineState<Battle> {
 
     final int index = script.params_20[0].get() & 0xffff;
     final int scriptEntrypoint = script.params_20[3].get() & 0xff;
+    final int flags = script.params_20[0].get();
+    final int param = script.params_20[2].get();
+    this.deffHeadData = "Dragoon DEFF Index: " + index + ", Entrypoint: " + scriptEntrypoint + ", FLAGs: " + flags + ", Params: " + param;
 
     LOGGER.info(DEFF, "Loading dragoon DEFF (ID: %d, flags: %x)", index, script.params_20[0].get() & 0xffff_0000);
 
     deffManager_800c693c.flags_20 |= dragoonDeffFlags_800fafec[index] << 16;
     this.allocateDeffEffectManager(script.scriptState_04, script.params_20[0].get(), script.params_20[1].get(), script.params_20[2].get(), script.params_20[3].get(), effect);
+    this.currentDeffFrame = -1;
+
+    this.dumpFolder = "D:\\TLoD_Modding\\DEFF_File_Mapping\\Dragoon-Captured\\4204-Dart_Red-Eyed_Dragoon_Transformation\\DeffParts\\";
+    this.isDeffDump = true;
+    try {
+      final Path path = Paths.get(this.dumpFolder);
+      Files.createDirectories(path);
+      System.out.println("DIRECTORY CREATED...");
+    } catch (IOException e) {
+      System.out.println("Failed to create folder at: " + e.getMessage());
+    }
 
     if((deffManager_800c693c.flags_20 & 0x4_0000) != 0) {
       this.loadDeffSounds(this.loadedDeff_800c6938.bentState_04, index != 0x2e || scriptEntrypoint != 0 ? 0 : 2);
@@ -6844,6 +6932,9 @@ public class Battle extends EngineState<Battle> {
 
     if(a0.frameCount_20 != -1) {
       a0.frameCount_20 += vsyncMode_8007a3b8;
+      if (this.isDeffDump) {
+        this.currentDeffFrame += vsyncMode_8007a3b8;
+      }
     }
 
     //LAB_800e70fc
@@ -6865,8 +6956,13 @@ public class Battle extends EngineState<Battle> {
         state.loadScriptFile(a0.script_14, a0.scriptEntrypoint_10);
         a0.init_1c = false;
         a0.frameCount_20 = 0;
+        if (this.isDeffDump) {
+          this.currentDeffFrame = 0;
+        }
       }
     }
+    final String deffTiming = "Frame: " + this.currentDeffFrame + ", isPaused: " + state.isPaused() + ", Init: " + a0.init_1c + '\n';
+    this.deffTimings += deffTiming;
 
     //LAB_800e71c4
   }
@@ -7039,7 +7135,13 @@ public class Battle extends EngineState<Battle> {
     this.lights_800c692c = deffManager._640;
     deffManager.flags_20 = 0x4;
     deffManager_800c693c = deffManager;
-    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> manager = allocateEffectManager("DEFF manager", null, null);
+    final String realName;
+    if (this.isDeffDump) {
+      realName = this.effectManagerCounter + "-DEFF-manager";
+    } else {
+      realName = "DEFF manager";
+    }
+    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> manager = allocateEffectManager(realName, null, null);
     manager.innerStruct_00.flags_04 = 0x600_0400;
     deffManager.scriptState_1c = manager;
     this.allocateLighting();
@@ -7072,7 +7174,13 @@ public class Battle extends EngineState<Battle> {
   @ScriptParam(direction = ScriptParam.Direction.OUT, type = ScriptParam.Type.INT, name = "effectIndex", description = "The new effect manager script index")
   @Method(0x800e93e0L)
   public FlowControl scriptAllocateEmptyEffectManagerChild(final RunningScript<? extends BattleObject> script) {
-    script.params_20[0].set(allocateEffectManager("Empty EffectManager child, allocated by script %d (%s) from scriptAllocateEmptyEffectManagerChild".formatted(script.scriptState_04.index, script.scriptState_04.name), script.scriptState_04, null).index);
+    final String realName;
+    if (this.isDeffDump) {
+      realName = this.effectManagerCounter + "-scriptAllocateEmptyEffectManagerChild";
+    } else {
+      realName = "Empty EffectManager child, allocated by script %d (%s) from scriptAllocateEmptyEffectManagerChild".formatted(script.scriptState_04.index, script.scriptState_04.name);
+    }
+    script.params_20[0].set(allocateEffectManager(realName, script.scriptState_04, null).index);
     return FlowControl.CONTINUE;
   }
 
@@ -7083,7 +7191,13 @@ public class Battle extends EngineState<Battle> {
   public FlowControl allocateBillboardSpriteEffect(final RunningScript<? extends BattleObject> script) {
     final BillboardSpriteEffect0c effect = new BillboardSpriteEffect0c();
 
-    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager("BillboardSpriteEffect0c", script.scriptState_04, effect);
+    final String realName;
+    if (this.isDeffDump) {
+      realName = this.effectManagerCounter + "-BillboardSpriteEffect0c";
+    } else {
+      realName = "BillboardSpriteEffect0c";
+    }
+    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager(realName, script.scriptState_04, effect);
 
     final EffectManagerData6c<EffectManagerParams.VoidType> manager = state.innerStruct_00;
     manager.flags_04 = 0x400_0000;
@@ -7136,12 +7250,23 @@ public class Battle extends EngineState<Battle> {
   @ScriptParam(direction = ScriptParam.Direction.IN, type = ScriptParam.Type.INT, name = "effectIndex", description = "The new effect manager script index")
   @Method(0x800e9854L)
   public FlowControl FUN_800e9854(final RunningScript<? extends BattleObject> script) {
+    // Shana Transform (4212) loads the file: 1 (Shana Normal), 2 (Shana Dragoon)
     final DeffPart.AnimatedTmdType animatedTmdType = (DeffPart.AnimatedTmdType)deffManager_800c693c.getDeffPart(script.params_20[1].get() | 0x200_0000);
 
     final ModelEffect13c effect = new ModelEffect13c("Script " + script.scriptState_04.index);
 
+    String animatedModelType = "-AnimatedModel-";
+    if (animatedTmdType.anim_14.magic_00 == Lmb.MAGIC) {
+      animatedModelType += "LMBType-0";
+    } else if(animatedTmdType.anim_14.magic_00 == Cmb.MAGIC) {
+      animatedModelType += "CMB";
+    } else {
+      animatedModelType += "SAF";
+    }
+
+    final String fileNameNew = this.effectManagerCounter + animatedModelType;
     final ScriptState<EffectManagerData6c<EffectManagerParams.AnimType>> state = allocateEffectManager(
-      animatedTmdType.name,
+      fileNameNew,
       script.scriptState_04,
       effect,
       new EffectManagerParams.AnimType()
@@ -7179,12 +7304,23 @@ public class Battle extends EngineState<Battle> {
   @ScriptParam(direction = ScriptParam.Direction.IN, type = ScriptParam.Type.INT, name = "flags", description = "The DEFF flags, mostly unknown")
   @Method(0x800e99bcL)
   public FlowControl FUN_800e99bc(final RunningScript<? extends BattleObject> script) {
+    // Shana Transform (4212) loads the file: 0 (Rotating Spirit Glow)
     final DeffPart.AnimatedTmdType animatedTmdType = (DeffPart.AnimatedTmdType)deffManager_800c693c.getDeffPart(script.params_20[1].get() | 0x100_0000);
 
     final ModelEffect13c effect = new ModelEffect13c("Script " + script.scriptState_04.index);
 
+    String animatedModelType = "-AnimatedModel-";
+    if (animatedTmdType.anim_14.magic_00 == Lmb.MAGIC) {
+      animatedModelType += "LMBType-0";
+    } else if(animatedTmdType.anim_14.magic_00 == Cmb.MAGIC) {
+      animatedModelType += "CMB";
+    } else {
+      animatedModelType += "SAF";
+    }
+
+    final String fileNameNew = this.effectManagerCounter + animatedModelType;
     final ScriptState<EffectManagerData6c<EffectManagerParams.AnimType>> state = allocateEffectManager(
-      animatedTmdType.name,
+      fileNameNew,
       script.scriptState_04,
       effect,
       new EffectManagerParams.AnimType()
@@ -7274,8 +7410,10 @@ public class Battle extends EngineState<Battle> {
 
     final ModelEffect13c effect = new ModelEffect13c("Script " + script.scriptState_04.index);
 
+    final String clonedModelName = (id & 0x700_0000) != 0 ? "Cloned battle stage model" : "Cloned bent model %d".formatted(id);
+    final String fileNameNew = this.effectManagerCounter + "-Cloned Model";
     final ScriptState<EffectManagerData6c<EffectManagerParams.AnimType>> state = allocateEffectManager(
-      (id & 0x700_0000) != 0 ? "Cloned battle stage model" : "Cloned bent model %d".formatted(id),
+      fileNameNew,
       script.scriptState_04,
       effect,
       new EffectManagerParams.AnimType()

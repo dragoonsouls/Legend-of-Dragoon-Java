@@ -10,6 +10,7 @@ import legend.core.memory.Method;
 import legend.core.memory.types.QuadConsumer;
 import legend.core.opengl.Obj;
 import legend.core.opengl.PolyBuilder;
+import legend.game.combat.Battle;
 import legend.game.combat.deff.DeffPart;
 import legend.game.combat.deff.Lmb;
 import legend.game.combat.deff.LmbTransforms14;
@@ -29,6 +30,7 @@ import static legend.core.GameEngine.GPU;
 import static legend.core.GameEngine.GTE;
 import static legend.core.GameEngine.RENDERER;
 import static legend.core.GameEngine.SCRIPTS;
+import static legend.game.EngineStates.currentEngineState_8004dd04;
 import static legend.game.Graphics.perspectiveTransform;
 import static legend.game.Graphics.projectionPlaneDistance_1f8003f8;
 import static legend.game.Graphics.tmdGp0Tpage_1f8003ec;
@@ -309,7 +311,12 @@ public class LmbAnimationEffect5c implements Effect<EffectManagerParams.AnimType
 
       //LAB_80117ac0
       //LAB_80117acc
-      final EffectManagerData6c<EffectManagerParams.AnimType> anim = new EffectManagerData6c<>(manager.battle, "Temp 2", new EffectManagerParams.AnimType());
+      final EffectManagerData6c<EffectManagerParams.AnimType> anim = new EffectManagerData6c<>(manager.battle, "Temp 2", new EffectManagerParams.AnimType(), ((Battle)currentEngineState_8004dd04).effectManagerCounter);
+      final String realName = ((Battle)currentEngineState_8004dd04).effectManagerCounter + "-LMBAnimationEffect5c";
+      if (((Battle)currentEngineState_8004dd04).isDeffDump) {
+        manager.setRealName(realName);
+        ((Battle)currentEngineState_8004dd04).effectManagerCounter += 1;
+      }
       anim.set(manager);
 
       final MV managerTransforms = new MV();
@@ -409,6 +416,7 @@ public class LmbAnimationEffect5c implements Effect<EffectManagerParams.AnimType
       if((manager.params_10.flags_00 & 0x40) == 0) {
         FUN_800e62a8();
       }
+
     }
     //LAB_80117e80
   }

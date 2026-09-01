@@ -92,6 +92,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
+import org.bytedeco.opencv.presets.opencv_core;
 import org.joml.Math;
 import org.joml.Matrix3f;
 import org.joml.Vector2f;
@@ -99,7 +100,10 @@ import org.joml.Vector3f;
 import org.joml.Vector3i;
 
 import javax.annotation.Nullable;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.BiFunction;
 
 import static legend.core.GameEngine.CONFIG;
@@ -195,6 +199,7 @@ public final class SEffe {
   private static int[] daddyHitSuccessWindowsPointer_8011a02c;
 
   private static final MV seffeTransforms = new MV();
+  public static List<String> deffObjectsManagerTicking = new ArrayList<>();
 
   @Method(0x800cea1cL)
   public static void scriptGetScriptedObjectPos(final int scriptIndex, final Vector3f posOut) {
@@ -549,6 +554,23 @@ public final class SEffe {
 
     //LAB_800e8040
     if(manager.effect_44 != null) {
+      if (((Battle)currentEngineState_8004dd04).isDeffDump) {
+        // Need the data before destroy
+        final String transX = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.x).toPlainString();
+        final String transY = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.y).toPlainString();
+        final String transZ = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.z).toPlainString();
+        final String correctTranslation = '[' + transX + "; " + transY + "; " + transZ + ']';
+        final String rotX = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.x).toPlainString();
+        final String rotY = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.y).toPlainString();
+        final String rotZ = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.z).toPlainString();
+        final String correctRotation = '[' + rotX + "; " + rotY + "; " + rotZ + ']';
+        final String scaX = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.x).toPlainString();
+        final String scaY = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.y).toPlainString();
+        final String scaZ = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.z).toPlainString();
+        final String correctScale = '[' + scaX + "; " + scaY + "; " + scaZ + ']';
+        final String currentDeffObjectAllocationData = correctTranslation + ',' + correctRotation + ',' + correctScale;
+        manager.writeFrameData(((Battle)currentEngineState_8004dd04).currentDeffFrame, currentDeffObjectAllocationData);
+      }
       manager.effect_44.destroy(state);
     }
   }
@@ -559,7 +581,7 @@ public final class SEffe {
 
   @Method(0x800e80c4L)
   public static <T extends EffectManagerParams<T>> ScriptState<EffectManagerData6c<T>> allocateEffectManager(final String name, @Nullable ScriptState<? extends BattleObject> parentState, @Nullable final Effect<T> effect, final T inner) {
-    final ScriptState<EffectManagerData6c<T>> state = SCRIPTS.allocateScriptState(name, new EffectManagerData6c<>((Battle)currentEngineState_8004dd04, name, inner));
+    final ScriptState<EffectManagerData6c<T>> state = SCRIPTS.allocateScriptState(name, new EffectManagerData6c<>((Battle)currentEngineState_8004dd04, name, inner, ((Battle)currentEngineState_8004dd04).effectManagerCounter));
     final EffectManagerData6c<T> manager = state.innerStruct_00;
 
     state.loadScriptFile(doNothingScript_8004f650);
@@ -606,6 +628,25 @@ public final class SEffe {
       parent.childScript_52 = (ScriptState)state;
     }
 
+    if (((Battle)currentEngineState_8004dd04).isDeffDump) {
+      manager.setRealName(name);
+      final String transX = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.x).toPlainString();
+      final String transY = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.y).toPlainString();
+      final String transZ = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.z).toPlainString();
+      final String correctTranslation = '[' + transX + "; " + transY + "; " + transZ + ']';
+      final String rotX = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.x).toPlainString();
+      final String rotY = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.y).toPlainString();
+      final String rotZ = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.z).toPlainString();
+      final String correctRotation = '[' + rotX + "; " + rotY + "; " + rotZ + ']';
+      final String scaX = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.x).toPlainString();
+      final String scaY = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.y).toPlainString();
+      final String scaZ = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.z).toPlainString();
+      final String correctScale = '[' + scaX + "; " + scaY + "; " + scaZ + ']';
+      final String currentDeffObjectAllocationData = correctTranslation + ',' + correctRotation + ',' + correctScale;
+      manager.setFrameData(((Battle)currentEngineState_8004dd04).currentDeffFrame, currentDeffObjectAllocationData);
+      manager.setStartFrame(((Battle)currentEngineState_8004dd04).effectManagerCounter);
+      ((Battle)currentEngineState_8004dd04).effectManagerCounter += 1;
+    }
     return state;
   }
 
@@ -638,6 +679,22 @@ public final class SEffe {
     //LAB_800e8f9c
     if(manager.effect_44 != null) {
       manager.effect_44.tick(state);
+      if (((Battle)currentEngineState_8004dd04).isDeffDump) {
+        final String transX = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.x).toPlainString();
+        final String transY = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.y).toPlainString();
+        final String transZ = BigDecimal.valueOf(state.innerStruct_00.params_10.trans_04.z).toPlainString();
+        final String correctTranslation = '[' + transX + "; " + transY + "; " + transZ + ']';
+        final String rotX = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.x).toPlainString();
+        final String rotY = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.y).toPlainString();
+        final String rotZ = BigDecimal.valueOf(state.innerStruct_00.params_10.rot_10.z).toPlainString();
+        final String correctRotation = '[' + rotX + "; " + rotY + "; " + rotZ + ']';
+        final String scaX = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.x).toPlainString();
+        final String scaY = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.y).toPlainString();
+        final String scaZ = BigDecimal.valueOf(state.innerStruct_00.params_10.scale_16.z).toPlainString();
+        final String correctScale = '[' + scaX + "; " + scaY + "; " + scaZ + ']';
+        final String currentDeffObjectAllocationData = correctTranslation + ',' + correctRotation + ',' + correctScale;
+        manager.setFrameData(((Battle)currentEngineState_8004dd04).currentDeffFrame, currentDeffObjectAllocationData);
+      }
     }
 
     //LAB_800e8fb8
@@ -993,8 +1050,9 @@ public final class SEffe {
     final boolean type1RenderType = (effectFlag >>> 24 & 0x10) == 0;
     final boolean hasMonochromeBase = (effectFlag >>> 24 & 0x20) == 0;
 
+    final String electricityName = ((Battle)currentEngineState_8004dd04).effectManagerCounter + "-ElectricityEffect38";
     final ScriptState<EffectManagerData6c<EffectManagerParams.ElectricityType>> state = allocateEffectManager(
-      "ElectricityEffect38",
+      electricityName,
       script.scriptState_04,
       new ElectricityEffect38(callbackIndex, scriptIndex, boltAngleRangeCutoff, boltCount, segmentOriginTranslationMagnitude, boltAngleStep, segmentOriginTranslationModifier, boltSegmentCount, numColourFadeSteps, colourShouldFade, fadeSuccessiveSegments, reinitializeNodes, addSuccessiveSegmentOriginTranslations, type1RenderType, hasMonochromeBase),
       new EffectManagerParams.ElectricityType()
@@ -1191,7 +1249,13 @@ public final class SEffe {
   @ScriptParam(direction = ScriptParam.Direction.OUT, type = ScriptParam.Type.INT, name = "effectIndex", description = "The new effect manager script index")
   @Method(0x801077e8L)
   public static FlowControl scriptAllocateAdditionOverlaysEffect(final RunningScript<? extends BattleObject> script) {
-    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager("Addition overlays", script.scriptState_04, new AdditionOverlaysEffect44(script.params_20[0].get(), script.params_20[1].get(), script.params_20[2].get()));
+    final String realName;
+    if (((Battle)currentEngineState_8004dd04).isDeffDump) {
+      realName = "-Addition-overlays";
+    } else {
+      realName = "Addition overlays";
+    }
+    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager(realName, script.scriptState_04, new AdditionOverlaysEffect44(script.params_20[0].get(), script.params_20[1].get(), script.params_20[2].get()));
     state.setStor(8, 0); // Storage for counterattack state
     script.params_20[4].set(state.index);
     additionOverlayActive_80119f41 = 1;
@@ -1644,7 +1708,13 @@ public final class SEffe {
   @ScriptParam(direction = ScriptParam.Direction.OUT, type = ScriptParam.Type.INT, name = "effectIndex", description = "The new effect manager script index")
   @Method(0x80108df8L)
   public static FlowControl FUN_80108df8(final RunningScript<? extends BattleObject> script) {
-    script.params_20[0].set(allocateEffectManager("Unknown (FUN_80108df8)", script.scriptState_04, null).index);
+    final String realName;
+    if (((Battle)currentEngineState_8004dd04).isDeffDump) {
+      realName = ((Battle)currentEngineState_8004dd04).effectManagerCounter + "-Unknown-FUN_80108df8";
+    } else {
+      realName = "Unknown (FUN_80108df8)";
+    }
+    script.params_20[0].set(allocateEffectManager(realName, script.scriptState_04, null).index);
     return FlowControl.CONTINUE;
   }
 
@@ -1656,7 +1726,13 @@ public final class SEffe {
     final float displayWidthModifier = RENDERER.getRenderAspectRatio() / RENDERER.getNativeAspectRatio();
     final int count = (int)(script.params_20[1].get() * displayWidthModifier);
     final RainEffect08 effect = new RainEffect08(count, displayWidthModifier);
-    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager("RainEffect08", script.scriptState_04, effect);
+    final String realName;
+    if (((Battle)currentEngineState_8004dd04).isDeffDump) {
+      realName = ((Battle)currentEngineState_8004dd04).effectManagerCounter + "-RainEffect08";
+    } else {
+      realName = "RainEffect08";
+    }
+    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager(realName, script.scriptState_04, effect);
     final EffectManagerData6c<EffectManagerParams.VoidType> manager = state.innerStruct_00;
     manager.params_10.flags_00 = 0x5000_0000;
 
@@ -1681,7 +1757,13 @@ public final class SEffe {
   @Method(0x80109a7cL)
   public static FlowControl scriptAllocateScreenDistortionEffect(final RunningScript<? extends BattleObject> script) {
     final ScreenDistortionEffectData08 effect = new ScreenDistortionEffectData08(script.params_20[2].get());
-    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager("Screen distortion", script.scriptState_04, effect);
+    final String realName;
+    if (((Battle)currentEngineState_8004dd04).isDeffDump) {
+      realName = ((Battle)currentEngineState_8004dd04).effectManagerCounter + "-Screen-distortion";
+    } else {
+      realName = "Screen distortion";
+    }
+    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager(realName, script.scriptState_04, effect);
     final EffectManagerData6c<EffectManagerParams.VoidType> manager = state.innerStruct_00;
     effect.angle_00 = MathHelper.PI;
     effect.angleStep_04 = MathHelper.psxDegToRad(script.params_20[1].get());
@@ -1758,8 +1840,9 @@ public final class SEffe {
     final DeffTmdRenderer14 v1 = (DeffTmdRenderer14)SCRIPTS.getObject(script.params_20[1].get(), EffectManagerData6c.class).effect_44;
     final TmdObjTable1c tmd = v1.tmd_08;
 
+    final String frozenJetName = ((Battle)currentEngineState_8004dd04).effectManagerCounter + "-FrozenJetEffect28";
     final ScriptState<EffectManagerData6c<EffectManagerParams.FrozenJetType>> state = allocateEffectManager(
-      "FrozenJetEffect28",
+      frozenJetName,
       script.scriptState_04,
       new FrozenJetEffect28(tmd.vert_top_00, tmd.primitives_10, s4, sp18 & 0xff),
       new EffectManagerParams.FrozenJetType()
@@ -1790,7 +1873,13 @@ public final class SEffe {
     final int count = script.params_20[1].get();
 
     final GradientRaysEffect24 effect = new GradientRaysEffect24(count);
-    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager("GradientRaysEffect24", script.scriptState_04, effect);
+    final String realName;
+    if (((Battle)currentEngineState_8004dd04).isDeffDump) {
+      realName = ((Battle)currentEngineState_8004dd04).effectManagerCounter + "-GradientRaysEffect24";
+    } else {
+      realName = "GradientRaysEffect24";
+    }
+    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager(realName, script.scriptState_04, effect);
     final EffectManagerData6c<EffectManagerParams.VoidType> manager = state.innerStruct_00;
     effect.yInner_08 = script.params_20[2].get();
     effect.midVertZ_0c = script.params_20[3].get();
@@ -1844,7 +1933,13 @@ public final class SEffe {
     final int captureH = script.params_20[5].get();
     final int rendererIndex = script.params_20[6].get();
     final ScreenCaptureEffect1c effect = new ScreenCaptureEffect1c(captureW, captureH, rendererIndex);
-    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager("Screen capture", script.scriptState_04, effect);
+    final String realName;
+    if (((Battle)currentEngineState_8004dd04).isDeffDump) {
+      realName = ((Battle)currentEngineState_8004dd04).effectManagerCounter + "-Screen-capture";
+    } else {
+      realName = "Screen capture";
+    }
+    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager(realName, script.scriptState_04, effect);
     final EffectManagerData6c<EffectManagerParams.VoidType> manager = state.innerStruct_00;
     effect.screenspaceW_10 = 0;
     script.params_20[0].set(state.index);
@@ -1873,8 +1968,14 @@ public final class SEffe {
     final int y = script.params_20[3].get();
     final int z = script.params_20[4].get();
 
+    final String realName;
+    if (((Battle)currentEngineState_8004dd04).isDeffDump) {
+      realName = ((Battle)currentEngineState_8004dd04).effectManagerCounter + "-LensFlareEffect50";
+    } else {
+      realName = "LensFlareEffect50";
+    }
     final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager(
-      "LensFlareEffect50",
+      realName,
       script.scriptState_04,
       new LensFlareEffect50()
     );
@@ -1939,7 +2040,13 @@ public final class SEffe {
     final int effectFlags = script.params_20[2].get();
 
     final WsDragoonTransformationFeathersEffect14 featherEffect = new WsDragoonTransformationFeathersEffect14(featherCount);
-    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager("WsDragoonTransformationFeathersEffect14", script.scriptState_04, featherEffect);
+    final String realName;
+    if (((Battle)currentEngineState_8004dd04).isDeffDump) {
+      realName = ((Battle)currentEngineState_8004dd04).effectManagerCounter + "-WsDragoonTransformationFeathersEffect14";
+    } else {
+      realName = "WsDragoonTransformationFeathersEffect14";
+    }
+    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager(realName, script.scriptState_04, featherEffect);
     final EffectManagerData6c<EffectManagerParams.VoidType> manager = state.innerStruct_00;
     featherEffect.unused_02 = 0;
 
@@ -2031,7 +2138,13 @@ public final class SEffe {
     final int preMovementTicksMax = script.params_20[8].get();
 
     final GoldDragoonTransformEffect20 effect = new GoldDragoonTransformEffect20(count);
-    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager("GoldDragoonTransformEffect20", script.scriptState_04, effect);
+    final String realName;
+    if (((Battle)currentEngineState_8004dd04).isDeffDump) {
+      realName = ((Battle)currentEngineState_8004dd04).effectManagerCounter + "-GoldDragoonTransformEffect20";
+    } else {
+      realName = "GoldDragoonTransformEffect20";
+    }
+    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager(realName, script.scriptState_04, effect);
 
     //LAB_8010d8ec
     for(int i = 0; i < count; i++) {
@@ -2092,7 +2205,13 @@ public final class SEffe {
     final int effectFlag = script.params_20[1].get();
 
     final StarChildrenMeteorEffect10 meteorEffect = new StarChildrenMeteorEffect10(meteorCount);
-    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager("StarChildrenMeteorEffect10", script.scriptState_04, meteorEffect);
+    final String realName;
+    if (((Battle)currentEngineState_8004dd04).isDeffDump) {
+      realName = ((Battle)currentEngineState_8004dd04).effectManagerCounter + "-StarChildrenMeteorEffect10";
+    } else {
+      realName = "StarChildrenMeteorEffect10";
+    }
+    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager(realName, script.scriptState_04, meteorEffect);
     final EffectManagerData6c<EffectManagerParams.VoidType> manager = state.innerStruct_00;
     manager.params_10.flags_00 = 0x5000_0000;
 
@@ -2147,7 +2266,13 @@ public final class SEffe {
     final int maxScale = script.params_20[3].get();
 
     final MoonlightStarsEffect18 starEffect = new MoonlightStarsEffect18(starCount);
-    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager("MoonlightStarsEffect18", script.scriptState_04, starEffect);
+    final String realName;
+    if (((Battle)currentEngineState_8004dd04).isDeffDump) {
+      realName = ((Battle)currentEngineState_8004dd04).effectManagerCounter + "-MoonlightStarsEffect18";
+    } else {
+      realName = "MoonlightStarsEffect18";
+    }
+    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager(realName, script.scriptState_04, starEffect);
     final EffectManagerData6c<EffectManagerParams.VoidType> manager = state.innerStruct_00;
     manager.params_10.flags_00 = 0x5000_0000;
 
@@ -2203,7 +2328,13 @@ public final class SEffe {
     final int maxTranslationMagnitude = script.params_20[3].get();
 
     final StarChildrenImpactEffect20 impactEffect = new StarChildrenImpactEffect20(impactCount);
-    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager("StarChildrenImpactEffect20", script.scriptState_04, impactEffect);
+    final String realName;
+    if (((Battle)currentEngineState_8004dd04).isDeffDump) {
+      realName = ((Battle)currentEngineState_8004dd04).effectManagerCounter + "-StarChildrenImpactEffect20";
+    } else {
+      realName = "StarChildrenImpactEffect20";
+    }
+    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager(realName, script.scriptState_04, impactEffect);
     final EffectManagerData6c<EffectManagerParams.VoidType> manager = state.innerStruct_00;
 
     //LAB_8010eecc
@@ -4024,7 +4155,13 @@ public final class SEffe {
       sp0x30.set(sp0x10);
     } else {
       //LAB_8011588c
-      final EffectManagerData6c<EffectManagerParams.VoidType> sp0x50 = new EffectManagerData6c<>((Battle)currentEngineState_8004dd04, "Temp", new EffectManagerParams.VoidType());
+      final EffectManagerData6c<EffectManagerParams.VoidType> sp0x50 = new EffectManagerData6c<>((Battle)currentEngineState_8004dd04, "Temp", new EffectManagerParams.VoidType(), ((Battle)currentEngineState_8004dd04).effectManagerCounter);
+      final String realName = ((Battle)currentEngineState_8004dd04).effectManagerCounter + "-attackEffectRelative";
+
+      if (((Battle)currentEngineState_8004dd04).isDeffDump) {
+        manager.setRealName(realName);
+        ((Battle)currentEngineState_8004dd04).effectManagerCounter += 1;
+      }
 
       sp0x50.params_10.trans_04.zero();
       sp0x50.params_10.rot_10.zero();
@@ -4113,7 +4250,13 @@ public final class SEffe {
 
   @Method(0x80115c2cL)
   public static void allocateScreenDarkeningEffect(final int startVal, final int targetVal) {
-    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager("Screen darkening", deffManager_800c693c.scriptState_1c, new ScreenDarkeningEffect());
+    final String realName;
+    if (((Battle)currentEngineState_8004dd04).isDeffDump) {
+      realName = ((Battle)currentEngineState_8004dd04).effectManagerCounter + "-Screen-darkening";
+    } else {
+      realName = "Screen darkening";
+    }
+    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager(realName, deffManager_800c693c.scriptState_1c, new ScreenDarkeningEffect());
     state.setStor(8, startVal);
     state.setStor(9, targetVal);
   }
@@ -4295,8 +4438,10 @@ public final class SEffe {
   @Method(0x80117eb0L)
   public static FlowControl scriptAllocateLmbAnimation(final RunningScript<? extends BattleObject> script) {
     final int lmbFlags = script.params_20[1].get();
+
+    final String lmbRealName = ((Battle)currentEngineState_8004dd04).effectManagerCounter + "-LMBAnimation";
     final ScriptState<EffectManagerData6c<EffectManagerParams.AnimType>> state = allocateEffectManager(
-      "LMB animation",
+      lmbRealName,
       script.scriptState_04,
       new LmbAnimationEffect5c(lmbFlags),
       new EffectManagerParams.AnimType()
@@ -4358,8 +4503,9 @@ public final class SEffe {
       name = tmdType.name;
     }
 
+    final String realName = ((Battle)currentEngineState_8004dd04).effectManagerCounter + "-StaticTMD";
     final ScriptState<EffectManagerData6c<EffectManagerParams.AnimType>> state = allocateEffectManager(
-      "DEFF TMD " + name,
+      realName,
       script.scriptState_04,
       new DeffTmdRenderer14(),
       new EffectManagerParams.AnimType()
@@ -4435,8 +4581,14 @@ public final class SEffe {
       }
     }
 
+    final String realName;
+    if (objTable != null) {
+      realName = ((Battle)currentEngineState_8004dd04).effectManagerCounter + "-Obj-Renderer-FUN_801184e4";
+    } else {
+      realName = ((Battle)currentEngineState_8004dd04).effectManagerCounter + "-Obj-Renderer-FUN_801184e4-withNoTMD";
+    }
     final ScriptState<EffectManagerData6c<EffectManagerParams.AnimType>> state = allocateEffectManager(
-      objTable != null ? "Obj table renderer FUN_801184e4 " + objTable.name : "TMD renderer with no TMD? FUN_801184e4",
+      realName,
       script.scriptState_04,
       new DeffTmdRenderer14(),
       new EffectManagerParams.AnimType()
@@ -4480,7 +4632,13 @@ public final class SEffe {
   @ScriptParam(direction = ScriptParam.Direction.OUT, type = ScriptParam.Type.INT, name = "effectIndex", description = "The new effect manager script index")
   @Method(0x801188ecL)
   public static FlowControl scriptAllocateShadowEffect(final RunningScript<? extends BattleObject> script) {
-    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager("Unknown (FUN_801188ec, %s)".formatted(shadowModel_800bda10.modelParts_00[0].tmd_08.name), script.scriptState_04, new ShadowEffect());
+    final String realName;
+    if (((Battle)currentEngineState_8004dd04).isDeffDump) {
+      realName = ((Battle)currentEngineState_8004dd04).effectManagerCounter + "-Unknown-FUN_801188ec";
+    } else {
+      realName = "Unknown (FUN_801188ec, %s)".formatted(shadowModel_800bda10.modelParts_00[0].tmd_08.name);
+    }
+    final ScriptState<EffectManagerData6c<EffectManagerParams.VoidType>> state = allocateEffectManager(realName, script.scriptState_04, new ShadowEffect());
     final EffectManagerData6c<EffectManagerParams.VoidType> manager = state.innerStruct_00;
     manager.flags_04 = 0x600_0000;
     manager.params_10.scale_16.set(0.25f, 0.25f, 0.25f);
@@ -4516,8 +4674,9 @@ public final class SEffe {
   @ScriptParam(direction = ScriptParam.Direction.IN, type = ScriptParam.Type.INT, name = "effectIndex", description = "The new effect manager script index")
   @Method(0x80118df4L)
   public static FlowControl allocateShirleyTransformWipeEffect(final RunningScript<? extends BattleObject> script) {
+    final String realName = ((Battle)currentEngineState_8004dd04).effectManagerCounter + "-ShirleyWipeEffect";
     final ScriptState<EffectManagerData6c<EffectManagerParams.ShirleyType>> state = allocateEffectManager(
-      "Shirley transform wipe effect",
+      realName,
       script.scriptState_04,
       new ShirleyTransformWipeEffect(),
       new EffectManagerParams.ShirleyType()
@@ -4549,8 +4708,9 @@ public final class SEffe {
     final int effectFlag = script.params_20[1].get();
     final int effectType = effectFlag & 0xff00_0000;
 
+    final String realName = ((Battle)currentEngineState_8004dd04).effectManagerCounter + "-SpriteWithTrailEffect30";
     final ScriptState<EffectManagerData6c<EffectManagerParams.ColourType>> state = allocateEffectManager(
-      "SpriteWithTrailEffect30",
+      realName,
       script.scriptState_04,
       new SpriteWithTrailEffect30(script.params_20[3].get()),
       new EffectManagerParams.ColourType()
